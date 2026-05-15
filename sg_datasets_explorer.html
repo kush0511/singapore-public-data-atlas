@@ -1334,7 +1334,11 @@
       });
       els.canvas.addEventListener('click', (event) => {
         const nearest = nearestDataset(event, filteredRows());
-        if (nearest) selectDataset(nearest.datasetId);
+        if (nearest) {
+          state.hoverId = '';
+          showTooltip(null);
+          selectDataset(nearest.datasetId);
+        }
       });
       window.addEventListener('resize', () => drawLandscape(filteredRows()));
       render();
