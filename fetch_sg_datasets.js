@@ -6,19 +6,24 @@ const OUT_METADATA = 'sg_datasets_metadata.json';
 const CONCURRENCY = Number(process.env.METADATA_CONCURRENCY || 10);
 
 async function main() {
-  const first = await getJson(`${DATASETS_URL}?page=1`);
-  const pages = first.data.pages;
-  const datasets = [...first.data.datasets];
+  let page = 1;
+  let pages = 1;
+  const byId = new Map();
 
-  console.log(`Fetching ${pages} catalog pages`);
-  for (let page = 2; page <= pages; page += 1) {
+  console.log('Fetching catalog pages');
+  while (page <= pages) {
     const payload = await getJson(`${DATASETS_URL}?page=${page}`);
-    datasets.push(...payload.data.datasets);
-    if (page % 50 === 0 || page === pages) {
-      console.log(`catalog ${page}/${pages}: ${datasets.length}`);
+    pages = Math.max(pages, Number(payload.data.pages || pages));
+    for (const dataset of payload.data.datasets || []) {
+      byId.set(dataset.datasetId, dataset);
     }
+    if (page % 50 === 0 || page === pages) {
+      console.log(`catalog ${page}/${pages}: ${byId.size}`);
+    }
+    page += 1;
   }
 
+  const datasets = [...byId.values()];
   fs.writeFileSync(OUT_CATALOG, JSON.stringify({
     fetchedAt: new Date().toISOString(),
     source: DATASETS_URL,
@@ -32,9 +37,20 @@ async function main() {
     : { metadata: {}, errors: {} };
   const metadata = existing.metadata || {};
   const errors = existing.errors || {};
-  const ids = datasets.map((dataset) => dataset.datasetId);
+  const catalogById = new Map(datasets.map((dataset) => [dataset.datasetId, dataset]));
+  const ids = datasets
+    .filter((dataset) => shouldRefreshMetadata(dataset, metadata[dataset.datasetId]))
+    .map((dataset) => dataset.datasetId);
 
-  console.log(`Fetching metadata for ${ids.length} datasets with concurrency ${CONCURRENCY}`);
+  for (const id of Object.keys(metadata)) {
+    if (!catalogById.has(id)) delete metadata[id];
+  }
+  for (const id of Object.keys(errors)) {
+    if (!catalogById.has(id)) delete errors[id];
+  }
+
+  console.log(`Metadata cache has ${Object.keys(metadata).length} current records`);
+  console.log(`Fetching metadata for ${ids.length} new or changed datasets with concurrency ${CONCURRENCY}`);
   let cursor = 0;
   let completed = 0;
 
@@ -62,6 +78,14 @@ async function main() {
   if (Object.keys(errors).length) {
     console.warn(`Metadata completed with ${Object.keys(errors).length} errors. Keeping successful records.`);
   }
+}
+
+function shouldRefreshMetadata(catalogDataset, cachedMetadata) {
+  if (!cachedMetadata) return true;
+  return cachedMetadata.lastUpdatedAt !== catalogDataset.lastUpdatedAt ||
+    cachedMetadata.name !== catalogDataset.name ||
+    cachedMetadata.format !== catalogDataset.format ||
+    (cachedMetadata.managedBy && cachedMetadata.managedBy !== catalogDataset.managedByAgencyName);
 }
 
 async function fetchMetadata(id) {

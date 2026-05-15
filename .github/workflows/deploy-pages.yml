@@ -13,6 +13,9 @@ permissions:
   pages: write
   id-token: write
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 concurrency:
   group: github-pages
   cancel-in-progress: false
@@ -29,8 +32,24 @@ jobs:
         with:
           node-version: "22"
 
+      - name: Restore dataset metadata cache
+        id: metadata-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: sg_datasets_metadata.json
+          key: sg-datasets-metadata-v2-${{ github.run_id }}
+          restore-keys: |
+            sg-datasets-metadata-v2-
+
       - name: Fetch latest data.gov.sg catalog and metadata
         run: node fetch_sg_datasets.js
+
+      - name: Save dataset metadata cache
+        uses: actions/cache/save@v4
+        if: always()
+        with:
+          path: sg_datasets_metadata.json
+          key: sg-datasets-metadata-v2-${{ github.run_id }}
 
       - name: Build static explorer data
         run: node build_sg_datasets_explorer_data.js

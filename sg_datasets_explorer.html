@@ -111,19 +111,22 @@
     }
 
     .workspace {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(340px, 390px);
-      grid-template-areas:
-        "main detail"
-        "directory detail";
-      gap: 0;
       min-height: calc(100vh - 92px);
     }
 
     .main {
-      grid-area: main;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(340px, 390px);
+      grid-template-areas:
+        "stats detail"
+        "lenses detail"
+        "atlas detail"
+        "projects detail"
+        "filters detail"
+        "directory detail";
+      gap: 0;
+      align-items: start;
       min-width: 0;
-      padding: 22px clamp(16px, 3vw, 34px) 22px;
     }
 
     .detail {
@@ -140,10 +143,11 @@
     }
 
     .stats {
+      grid-area: stats;
       display: grid;
       grid-template-columns: repeat(4, minmax(0, 1fr));
       gap: 1px;
-      margin-bottom: 22px;
+      margin: 22px clamp(16px, 3vw, 34px);
       border: 1px solid var(--line-soft);
       background: var(--line-soft);
     }
@@ -167,6 +171,12 @@
       color: var(--muted);
       font-size: 12px;
       line-height: 1.35;
+    }
+
+    .lens-panel {
+      grid-area: lenses;
+      min-width: 0;
+      margin: 0 clamp(16px, 3vw, 34px);
     }
 
     .lens-strip, .topic-strip, .project-strip {
@@ -200,7 +210,9 @@
     }
 
     .atlas {
-      margin-top: 14px;
+      grid-area: atlas;
+      min-width: 0;
+      margin: 14px clamp(16px, 3vw, 34px) 0;
       padding-top: 16px;
       border-top: 1px solid var(--line-soft);
     }
@@ -266,9 +278,13 @@
     }
 
     .projects {
+      grid-area: projects;
       margin-top: 24px;
+      margin-left: clamp(16px, 3vw, 34px);
+      margin-right: clamp(16px, 3vw, 34px);
       padding-top: 18px;
       border-top: 1px solid var(--line-soft);
+      min-width: 0;
     }
 
     .project {
@@ -299,11 +315,12 @@
     }
 
     .filters {
+      grid-area: filters;
       display: grid;
       grid-template-columns: minmax(0, 1fr) 170px 150px;
       gap: 10px;
       align-items: end;
-      margin-top: 16px;
+      margin: 16px clamp(16px, 3vw, 34px) 0;
     }
 
     .directory {
@@ -558,11 +575,15 @@
         grid-template-columns: minmax(200px, 1fr) 150px 150px;
       }
 
-      .workspace {
+      .main {
         grid-template-columns: 1fr;
         grid-template-areas:
-          "main"
+          "stats"
+          "lenses"
+          "atlas"
           "detail"
+          "projects"
+          "filters"
           "directory";
       }
 
@@ -577,35 +598,101 @@
     @media (max-width: 760px) {
       .top {
         position: static;
-        gap: 14px;
+        gap: 10px;
+        padding: 12px 14px;
       }
 
-      .searchbar, .filters {
-        grid-template-columns: 1fr;
+      .brand h1 {
+        font-size: 23px;
+      }
+
+      .brand p {
+        display: none;
+      }
+
+      .searchbar {
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+
+      .searchbar .field:first-child {
+        grid-column: 1 / -1;
+      }
+
+      input, select {
+        min-height: 38px;
+        padding: 7px 9px;
       }
 
       .stats {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-
-      .stat {
-        min-height: 78px;
+        display: none;
       }
 
       .main {
-        padding-top: 16px;
+        grid-template-areas:
+          "atlas"
+          "detail"
+          "lenses"
+          "filters"
+          "projects"
+          "directory";
       }
 
-      .directory {
-        padding: 0 16px 42px;
+      .lens-panel {
+        margin: 18px 14px 0;
+        padding-top: 14px;
+        border-top: 1px solid var(--line-soft);
+      }
+
+      .atlas {
+        margin: 12px 14px 0;
+        padding-top: 0;
+        border-top: 0;
+      }
+
+      .section-head {
+        margin-bottom: 8px;
+      }
+
+      .section-head h2 {
+        font-size: 15px;
       }
 
       #landscape {
-        height: 310px;
+        height: clamp(310px, 58vh, 390px);
       }
 
       .map-shell {
         min-height: 310px;
+      }
+
+      .filters {
+        grid-template-columns: 1fr 1fr;
+        margin: 14px 14px 0;
+      }
+
+      .filters .field:first-child {
+        grid-column: 1 / -1;
+      }
+
+      .projects {
+        margin: 18px 14px 0;
+        padding-top: 14px;
+      }
+
+      .project {
+        flex-basis: min(300px, 78vw);
+        padding: 10px 11px;
+      }
+
+      .pill {
+        min-height: 31px;
+        padding: 6px 9px;
+        font-size: 12px;
+      }
+
+      .directory {
+        padding: 0 14px 42px;
       }
 
       .directory-head {
@@ -680,7 +767,7 @@
     <main class="main">
       <section class="stats" id="stats"></section>
 
-      <section>
+      <section class="lens-panel">
         <div class="section-head">
           <h2>Lenses</h2>
           <span class="hint" id="matchText"></span>
@@ -699,6 +786,8 @@
           <div class="tooltip" id="tooltip"></div>
         </div>
       </section>
+
+      <aside class="detail" id="detail"></aside>
 
       <section class="projects">
         <div class="section-head">
@@ -728,19 +817,16 @@
         </div>
       </section>
 
+      <section class="directory">
+        <div class="directory-head">
+          <span>Rank</span>
+          <span>Dataset</span>
+          <span>Source</span>
+          <span>Why it may matter</span>
+        </div>
+        <div class="rows" id="rows"></div>
+      </section>
     </main>
-
-    <aside class="detail" id="detail"></aside>
-
-    <section class="directory">
-      <div class="directory-head">
-        <span>Rank</span>
-        <span>Dataset</span>
-        <span>Source</span>
-        <span>Why it may matter</span>
-      </div>
-      <div class="rows" id="rows"></div>
-    </section>
   </div>
 
   <script>
@@ -1133,14 +1219,13 @@
       els.tooltip.style.top = `${Math.max(8, y)}px`;
     }
 
-    function selectDataset(id, scroll = false) {
+    function selectDataset(id) {
       state.selectedId = id;
       renderDetail();
       document.querySelectorAll('.row.selected').forEach((row) => row.classList.remove('selected'));
       const row = document.querySelector(`.row[data-id="${CSS.escape(id)}"]`);
       if (row) {
         row.classList.add('selected');
-        if (scroll) row.scrollIntoView({ block: 'center', behavior: 'smooth' });
       }
       drawLandscape(filteredRows());
     }
@@ -1229,7 +1314,7 @@
       });
       els.detail.addEventListener('click', async (event) => {
         const mini = event.target.closest('.mini[data-id]');
-        if (mini) selectDataset(mini.dataset.id, true);
+        if (mini) selectDataset(mini.dataset.id);
         if (event.target.id === 'copyId') {
           await navigator.clipboard.writeText(state.selectedId);
           event.target.textContent = 'Copied';
@@ -1249,7 +1334,7 @@
       });
       els.canvas.addEventListener('click', (event) => {
         const nearest = nearestDataset(event, filteredRows());
-        if (nearest) selectDataset(nearest.datasetId, true);
+        if (nearest) selectDataset(nearest.datasetId);
       });
       window.addEventListener('resize', () => drawLandscape(filteredRows()));
       render();
