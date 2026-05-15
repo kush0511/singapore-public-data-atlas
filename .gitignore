@@ -1,0 +1,5 @@
+sg_datasets_all.json
+sg_datasets_metadata.json
+sg_datasets_raw.json
+sg_datasets_atlas_*.png
+sg_datasets_explorer_preview.png

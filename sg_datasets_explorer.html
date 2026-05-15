@@ -1,0 +1,1261 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Singapore Public Data Atlas</title>
+  <link rel="icon" href="data:,">
+  <script src="sg_datasets_explorer_data.js"></script>
+  <style>
+    :root {
+      --paper: #f7f4ee;
+      --paper-2: #fbfaf7;
+      --ink: #25221d;
+      --muted: #6f6960;
+      --soft: #d8d0c4;
+      --line: #c9c0b3;
+      --line-soft: rgba(37, 34, 29, 0.12);
+      --wash: rgba(255, 255, 255, 0.52);
+      --clay: #8b5e3c;
+      --moss: #667b50;
+      --sea: #3e7476;
+      --plum: #7b587b;
+      --blue: #4d668b;
+      --rust: #a4573f;
+      --gold: #9a7538;
+      --green: #4d7255;
+      --shadow: 0 22px 60px rgba(37, 34, 29, 0.08);
+    }
+
+    * { box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      letter-spacing: 0;
+    }
+
+    button, input, select {
+      color: inherit;
+      font: inherit;
+    }
+
+    button { cursor: pointer; }
+
+    .top {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      display: grid;
+      grid-template-columns: minmax(220px, 0.9fr) minmax(300px, 1.7fr);
+      gap: 22px;
+      padding: 18px clamp(16px, 3vw, 34px);
+      background: color-mix(in srgb, var(--paper) 88%, white);
+      border-bottom: 1px solid var(--line-soft);
+      backdrop-filter: blur(18px);
+    }
+
+    .brand h1 {
+      margin: 0;
+      font-size: clamp(22px, 3vw, 34px);
+      line-height: 1.02;
+      font-weight: 690;
+    }
+
+    .brand p {
+      max-width: 520px;
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.42;
+    }
+
+    .searchbar {
+      align-self: end;
+      display: grid;
+      grid-template-columns: minmax(190px, 1fr) 150px 150px;
+      gap: 10px;
+    }
+
+    .field {
+      display: grid;
+      gap: 5px;
+      min-width: 0;
+    }
+
+    label, .eyebrow {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 720;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    input, select {
+      width: 100%;
+      min-height: 42px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      padding: 9px 11px;
+      background: var(--paper-2);
+      outline: none;
+    }
+
+    input:focus, select:focus {
+      border-color: var(--clay);
+      box-shadow: 0 0 0 3px rgba(139, 94, 60, 0.12);
+    }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(340px, 390px);
+      grid-template-areas:
+        "main detail"
+        "directory detail";
+      gap: 0;
+      min-height: calc(100vh - 92px);
+    }
+
+    .main {
+      grid-area: main;
+      min-width: 0;
+      padding: 22px clamp(16px, 3vw, 34px) 22px;
+    }
+
+    .detail {
+      grid-area: detail;
+      position: sticky;
+      top: 89px;
+      align-self: start;
+      height: calc(100vh - 89px);
+      overflow: auto;
+      padding: 22px 24px 34px;
+      background: rgba(251, 250, 247, 0.78);
+      border-left: 1px solid var(--line-soft);
+      backdrop-filter: blur(18px);
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 1px;
+      margin-bottom: 22px;
+      border: 1px solid var(--line-soft);
+      background: var(--line-soft);
+    }
+
+    .stat {
+      min-height: 86px;
+      padding: 14px 15px;
+      background: rgba(251, 250, 247, 0.70);
+    }
+
+    .stat b {
+      display: block;
+      font-size: 25px;
+      line-height: 1;
+      margin-bottom: 8px;
+      font-weight: 680;
+    }
+
+    .stat span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .lens-strip, .topic-strip, .project-strip {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 8px;
+      scrollbar-width: thin;
+    }
+
+    .lens-strip {
+      margin-bottom: 8px;
+    }
+
+    .pill {
+      flex: 0 0 auto;
+      min-height: 34px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: transparent;
+      padding: 7px 11px;
+      color: #3b352e;
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    .pill:hover, .pill.active {
+      background: var(--ink);
+      color: var(--paper-2);
+      border-color: var(--ink);
+    }
+
+    .atlas {
+      margin-top: 14px;
+      padding-top: 16px;
+      border-top: 1px solid var(--line-soft);
+    }
+
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: 17px;
+      font-weight: 680;
+      line-height: 1.2;
+    }
+
+    .hint {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .map-shell {
+      position: relative;
+      border: 1px solid var(--line-soft);
+      background:
+        linear-gradient(rgba(37, 34, 29, 0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(37, 34, 29, 0.035) 1px, transparent 1px),
+        rgba(251, 250, 247, 0.68);
+      background-size: 42px 42px;
+      min-height: 390px;
+      box-shadow: var(--shadow);
+    }
+
+    #landscape {
+      display: block;
+      width: 100%;
+      height: 420px;
+      touch-action: manipulation;
+    }
+
+    .tooltip {
+      position: absolute;
+      z-index: 3;
+      width: min(320px, calc(100vw - 30px));
+      display: none;
+      pointer-events: none;
+      padding: 10px 11px;
+      border: 1px solid var(--line-soft);
+      background: color-mix(in srgb, var(--paper-2) 92%, white);
+      box-shadow: 0 12px 36px rgba(37, 34, 29, 0.16);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .tooltip b {
+      display: block;
+      margin-bottom: 3px;
+      font-size: 13px;
+    }
+
+    .projects {
+      margin-top: 24px;
+      padding-top: 18px;
+      border-top: 1px solid var(--line-soft);
+    }
+
+    .project {
+      flex: 0 0 min(360px, 84vw);
+      text-align: left;
+      border: 1px solid var(--line-soft);
+      border-radius: 7px;
+      background: transparent;
+      padding: 12px 13px;
+    }
+
+    .project.active, .project:hover {
+      background: rgba(255, 255, 255, 0.62);
+      border-color: var(--ink);
+    }
+
+    .project strong {
+      display: block;
+      font-size: 14px;
+      margin-bottom: 6px;
+    }
+
+    .project span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.38;
+    }
+
+    .filters {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 170px 150px;
+      gap: 10px;
+      align-items: end;
+      margin-top: 16px;
+    }
+
+    .directory {
+      grid-area: directory;
+      margin-top: 24px;
+      padding: 0 clamp(16px, 3vw, 34px) 42px;
+      border-top: 1px solid var(--line-soft);
+    }
+
+    .directory-head {
+      position: sticky;
+      top: 90px;
+      z-index: 4;
+      display: grid;
+      grid-template-columns: 74px minmax(0, 1.1fr) minmax(150px, 0.7fr) minmax(220px, 1fr);
+      gap: 12px;
+      padding: 11px 8px;
+      background: color-mix(in srgb, var(--paper) 90%, white);
+      border-bottom: 1px solid var(--line-soft);
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 720;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .rows {
+      display: grid;
+    }
+
+    .row {
+      width: 100%;
+      display: grid;
+      grid-template-columns: 74px minmax(0, 1.1fr) minmax(150px, 0.7fr) minmax(220px, 1fr);
+      gap: 12px;
+      align-items: start;
+      text-align: left;
+      border: 0;
+      border-bottom: 1px solid var(--line-soft);
+      background: transparent;
+      padding: 12px 8px;
+      min-height: 62px;
+      content-visibility: auto;
+      contain-intrinsic-size: 64px;
+    }
+
+    .row:hover, .row.selected {
+      background: rgba(255, 255, 255, 0.56);
+    }
+
+    .rank {
+      color: var(--muted);
+      font-variant-numeric: tabular-nums;
+      font-size: 12px;
+    }
+
+    .score {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 38px;
+      height: 26px;
+      margin-top: 4px;
+      border-radius: 999px;
+      background: rgba(37, 34, 29, 0.08);
+      color: var(--ink);
+      font-size: 12px;
+      font-weight: 720;
+    }
+
+    .name {
+      display: block;
+      font-size: 14px;
+      line-height: 1.25;
+      font-weight: 660;
+    }
+
+    .sub {
+      display: block;
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.32;
+    }
+
+    .tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+    }
+
+    .tag {
+      border: 1px solid var(--line-soft);
+      border-radius: 999px;
+      padding: 3px 7px;
+      color: #514a42;
+      font-size: 11px;
+      white-space: nowrap;
+    }
+
+    .empty {
+      padding: 28px 8px;
+      color: var(--muted);
+      border-bottom: 1px solid var(--line-soft);
+    }
+
+    .detail h2 {
+      margin: 6px 0 8px;
+      font-size: 23px;
+      line-height: 1.12;
+    }
+
+    .detail .desc {
+      color: #514b43;
+      font-size: 13px;
+      line-height: 1.47;
+      margin: 14px 0 18px;
+    }
+
+    .meta-list {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1px;
+      margin: 15px 0;
+      border: 1px solid var(--line-soft);
+      background: var(--line-soft);
+    }
+
+    .meta-item {
+      min-width: 0;
+      padding: 10px;
+      background: rgba(251, 250, 247, 0.75);
+    }
+
+    .meta-item span {
+      display: block;
+      color: var(--muted);
+      font-size: 11px;
+      margin-bottom: 3px;
+    }
+
+    .meta-item b {
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 13px;
+    }
+
+    .metric {
+      display: grid;
+      grid-template-columns: 86px 1fr 34px;
+      gap: 8px;
+      align-items: center;
+      margin: 8px 0;
+      font-size: 12px;
+    }
+
+    .metric span:first-child {
+      color: var(--muted);
+    }
+
+    .track {
+      height: 6px;
+      background: rgba(37, 34, 29, 0.10);
+      overflow: hidden;
+      border-radius: 999px;
+    }
+
+    .fill {
+      height: 100%;
+      width: 0;
+      background: var(--clay);
+      border-radius: inherit;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 16px 0 20px;
+    }
+
+    .text-link {
+      display: inline-flex;
+      align-items: center;
+      min-height: 34px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      color: var(--ink);
+      background: transparent;
+      padding: 7px 10px;
+      text-decoration: none;
+      font-size: 13px;
+    }
+
+    .text-link:hover {
+      background: var(--ink);
+      color: var(--paper-2);
+      border-color: var(--ink);
+    }
+
+    .mini-list {
+      display: grid;
+      border-top: 1px solid var(--line-soft);
+      margin-top: 8px;
+    }
+
+    .mini {
+      text-align: left;
+      border: 0;
+      border-bottom: 1px solid var(--line-soft);
+      background: transparent;
+      padding: 9px 0;
+    }
+
+    .mini strong {
+      display: block;
+      font-size: 13px;
+      line-height: 1.25;
+    }
+
+    .mini span {
+      display: block;
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .field-list {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.55;
+      overflow-wrap: anywhere;
+    }
+
+    .topic-dot {
+      display: inline-block;
+      width: 9px;
+      height: 9px;
+      margin-right: 6px;
+      border-radius: 999px;
+      background: var(--clay);
+    }
+
+    @media (max-width: 1120px) {
+      .top {
+        grid-template-columns: 1fr;
+      }
+
+      .searchbar {
+        grid-template-columns: minmax(200px, 1fr) 150px 150px;
+      }
+
+      .workspace {
+        grid-template-columns: 1fr;
+        grid-template-areas:
+          "main"
+          "detail"
+          "directory";
+      }
+
+      .detail {
+        position: static;
+        height: auto;
+        border-left: 0;
+        border-bottom: 1px solid var(--line-soft);
+      }
+    }
+
+    @media (max-width: 760px) {
+      .top {
+        position: static;
+        gap: 14px;
+      }
+
+      .searchbar, .filters {
+        grid-template-columns: 1fr;
+      }
+
+      .stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .stat {
+        min-height: 78px;
+      }
+
+      .main {
+        padding-top: 16px;
+      }
+
+      .directory {
+        padding: 0 16px 42px;
+      }
+
+      #landscape {
+        height: 310px;
+      }
+
+      .map-shell {
+        min-height: 310px;
+      }
+
+      .directory-head {
+        display: none;
+      }
+
+      .row {
+        grid-template-columns: 48px minmax(0, 1fr);
+        gap: 10px;
+      }
+
+      .row .sub:nth-child(n), .row > .agency-cell, .row > .reason-cell {
+        grid-column: 2;
+      }
+
+      .agency-cell, .reason-cell {
+        margin-top: -4px;
+      }
+
+      .detail {
+        padding: 18px 16px;
+      }
+
+      .detail h2 {
+        font-size: 20px;
+      }
+
+      .detail .desc {
+        display: -webkit-box;
+        -webkit-line-clamp: 4;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+
+      .detail-related, .detail-fields {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="top">
+    <div class="brand">
+      <h1>Singapore public data atlas</h1>
+      <p id="catalogMeta"></p>
+    </div>
+    <div class="searchbar">
+      <div class="field">
+        <label for="query">Search</label>
+        <input id="query" type="search" autocomplete="off" placeholder="dengue, religion, taxi, hawker, resale, Syonan...">
+      </div>
+      <div class="field">
+        <label for="sort">Sort</label>
+        <select id="sort">
+          <option value="project">Project leverage</option>
+          <option value="hidden">Most hidden</option>
+          <option value="live">Most live</option>
+          <option value="geo">Most geographic</option>
+          <option value="updated">Recently updated</option>
+          <option value="size">Largest datasets</option>
+          <option value="name">Name</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="format">Format</label>
+        <select id="format"></select>
+      </div>
+    </div>
+  </header>
+
+  <div class="workspace">
+    <main class="main">
+      <section class="stats" id="stats"></section>
+
+      <section>
+        <div class="section-head">
+          <h2>Lenses</h2>
+          <span class="hint" id="matchText"></span>
+        </div>
+        <div class="lens-strip" id="lenses"></div>
+        <div class="topic-strip" id="topics"></div>
+      </section>
+
+      <section class="atlas">
+        <div class="section-head">
+          <h2>Catalog landscape</h2>
+          <span class="hint">Every dot is a dataset</span>
+        </div>
+        <div class="map-shell">
+          <canvas id="landscape"></canvas>
+          <div class="tooltip" id="tooltip"></div>
+        </div>
+      </section>
+
+      <section class="projects">
+        <div class="section-head">
+          <h2>Project questions</h2>
+          <span class="hint">Use these as opinionated entry points</span>
+        </div>
+        <div class="project-strip" id="projects"></div>
+      </section>
+
+      <section class="filters">
+        <div class="field">
+          <label for="wordJump">Keyword jump</label>
+          <select id="wordJump"></select>
+        </div>
+        <div class="field">
+          <label for="agency">Agency</label>
+          <select id="agency"></select>
+        </div>
+        <div class="field">
+          <label for="freshness">Updated</label>
+          <select id="freshness">
+            <option value="all">Any time</option>
+            <option value="90">Last 90 days</option>
+            <option value="365">Last year</option>
+            <option value="730">Last 2 years</option>
+          </select>
+        </div>
+      </section>
+
+    </main>
+
+    <aside class="detail" id="detail"></aside>
+
+    <section class="directory">
+      <div class="directory-head">
+        <span>Rank</span>
+        <span>Dataset</span>
+        <span>Source</span>
+        <span>Why it may matter</span>
+      </div>
+      <div class="rows" id="rows"></div>
+    </section>
+  </div>
+
+  <script>
+    const catalog = window.SG_DATASETS;
+    const datasets = catalog.datasets;
+    const byId = new Map(datasets.map((dataset) => [dataset.datasetId, dataset]));
+    const fmt = new Intl.NumberFormat('en-SG');
+
+    const topicColors = {
+      'Live city': '#a4573f',
+      'Health & vulnerability': '#7b587b',
+      'Maps & infrastructure': '#3e7476',
+      'Housing & land': '#9a7538',
+      'Economy & work': '#4d668b',
+      'People & identity': '#8b5e3c',
+      'Culture & archives': '#667b50',
+      'Safety & environment': '#4d7255',
+      Other: '#80786e'
+    };
+
+    const lensDefs = [
+      ['all', 'All'],
+      ['project', 'High leverage'],
+      ['live', 'Live feeds'],
+      ['geo', 'Map-first'],
+      ['human', 'Human stakes'],
+      ['hidden', 'Hidden gems'],
+      ['combo', 'Combine-ready'],
+      ['time', 'Long arcs'],
+      ['api', 'Buildable APIs']
+    ];
+
+    const state = {
+      query: '',
+      sort: 'project',
+      format: '',
+      agency: '',
+      freshness: 'all',
+      lens: 'all',
+      topic: '',
+      project: '',
+      selectedId: datasets[0].datasetId,
+      hoverId: ''
+    };
+
+    const els = {
+      meta: document.querySelector('#catalogMeta'),
+      query: document.querySelector('#query'),
+      sort: document.querySelector('#sort'),
+      format: document.querySelector('#format'),
+      agency: document.querySelector('#agency'),
+      freshness: document.querySelector('#freshness'),
+      wordJump: document.querySelector('#wordJump'),
+      stats: document.querySelector('#stats'),
+      matchText: document.querySelector('#matchText'),
+      lenses: document.querySelector('#lenses'),
+      topics: document.querySelector('#topics'),
+      projects: document.querySelector('#projects'),
+      rows: document.querySelector('#rows'),
+      detail: document.querySelector('#detail'),
+      canvas: document.querySelector('#landscape'),
+      tooltip: document.querySelector('#tooltip')
+    };
+
+    function dateLabel(value) {
+      if (!value) return 'Unknown';
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return 'Unknown';
+      return date.toLocaleDateString('en-SG', { year: 'numeric', month: 'short', day: 'numeric' });
+    }
+
+    function sizeLabel(bytes) {
+      if (!bytes) return 'Unknown';
+      const units = ['B', 'KB', 'MB', 'GB'];
+      let value = bytes;
+      let unit = 0;
+      while (value >= 1024 && unit < units.length - 1) {
+        value /= 1024;
+        unit += 1;
+      }
+      return `${value >= 10 ? value.toFixed(0) : value.toFixed(1)} ${units[unit]}`;
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? '').replace(/[&<>"']/g, (ch) => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[ch]));
+    }
+
+    function metadataUrl(id) {
+      return `https://api-production.data.gov.sg/v2/public/api/datasets/${encodeURIComponent(id)}/metadata`;
+    }
+
+    function searchText(dataset) {
+      return [
+        dataset.datasetId, dataset.name, dataset.agency, dataset.format, dataset.topic,
+        dataset.description, dataset.reason, dataset.signals.join(' '), dataset.fields.join(' ')
+      ].join(' ').toLowerCase();
+    }
+
+    function queryScore(dataset, terms, phrase) {
+      if (!terms.length) return 1;
+      const haystack = searchText(dataset);
+      let score = phrase && haystack.includes(phrase) ? terms.length + 3 : 0;
+      for (const term of terms) {
+        if (haystack.includes(term)) score += 1;
+        if (dataset.name.toLowerCase().includes(term)) score += 1.5;
+        if (dataset.topic.toLowerCase().includes(term)) score += 0.75;
+      }
+      return score;
+    }
+
+    function lensMatch(dataset) {
+      const s = dataset.scores;
+      if (state.lens === 'project') return s.project >= 45;
+      if (state.lens === 'live') return s.live >= 45 || dataset.format === 'API';
+      if (state.lens === 'geo') return s.geo >= 48 || dataset.format === 'GEOJSON';
+      if (state.lens === 'human') return s.human >= 45;
+      if (state.lens === 'hidden') return s.hidden >= 35 || dataset.signals.includes('underexplored');
+      if (state.lens === 'combo') return s.combo >= 45 || dataset.relatedProjects.length > 0;
+      if (state.lens === 'time') return s.time >= 45 || dataset.spanYears >= 25;
+      if (state.lens === 'api') return dataset.format === 'API';
+      return true;
+    }
+
+    function projectMatch(dataset) {
+      if (!state.project) return true;
+      const project = catalog.projects.find((item) => item.id === state.project);
+      return project ? project.ids.includes(dataset.datasetId) : true;
+    }
+
+    function filteredRows() {
+      const phrase = state.query.toLowerCase().trim();
+      const terms = phrase.split(/\s+/).filter(Boolean);
+      let rows = datasets.filter((dataset) => {
+        dataset._q = queryScore(dataset, terms, phrase);
+        if (state.format && dataset.format !== state.format) return false;
+        if (state.agency && dataset.agency !== state.agency) return false;
+        if (state.topic && dataset.topic !== state.topic) return false;
+        if (state.freshness !== 'all' && dataset.updatedDays > Number(state.freshness)) return false;
+        if (!lensMatch(dataset) || !projectMatch(dataset)) return false;
+        if (terms.length && dataset._q <= 0) return false;
+        return true;
+      });
+
+      rows.sort((a, b) => {
+        if (terms.length && b._q !== a._q) return b._q - a._q;
+        if (state.sort === 'hidden') return b.scores.hidden - a.scores.hidden || b.scores.project - a.scores.project;
+        if (state.sort === 'live') return b.scores.live - a.scores.live || b.scores.project - a.scores.project;
+        if (state.sort === 'geo') return b.scores.geo - a.scores.geo || b.scores.project - a.scores.project;
+        if (state.sort === 'updated') return new Date(b.lastUpdatedAt || 0) - new Date(a.lastUpdatedAt || 0);
+        if (state.sort === 'size') return b.datasetSize - a.datasetSize;
+        if (state.sort === 'name') return a.name.localeCompare(b.name);
+        return b.scores.project - a.scores.project || a.name.localeCompare(b.name);
+      });
+
+      return rows;
+    }
+
+    function renderStats(rows) {
+      const live = rows.filter((dataset) => dataset.scores.live >= 45 || dataset.format === 'API').length;
+      const geo = rows.filter((dataset) => dataset.scores.geo >= 48 || dataset.format === 'GEOJSON').length;
+      const hidden = rows.filter((dataset) => dataset.scores.hidden >= 35 || dataset.signals.includes('underexplored')).length;
+      els.stats.innerHTML = [
+        [fmt.format(rows.length), 'datasets in the current view'],
+        [fmt.format(live), 'live or operational feeds'],
+        [fmt.format(geo), 'map-ready or place-linked datasets'],
+        [fmt.format(hidden), 'hidden-gem candidates']
+      ].map(([value, label]) => `<div class="stat"><b>${value}</b><span>${label}</span></div>`).join('');
+      els.matchText.textContent = `${fmt.format(rows.length)} of ${fmt.format(catalog.count)} datasets`;
+    }
+
+    function renderControls() {
+      els.meta.textContent = `${fmt.format(catalog.count)} datasets, ${fmt.format(catalog.formats.find(([name]) => name === 'GEOJSON')?.[1] || 0)} GeoJSON layers, ${fmt.format(catalog.formats.find(([name]) => name === 'API')?.[1] || 0)} APIs. Catalog fetched ${dateLabel(catalog.fetchedAt)}; metadata fetched ${dateLabel(catalog.metadataFetchedAt)}.`;
+
+      els.lenses.innerHTML = lensDefs.map(([id, label]) =>
+        `<button class="pill ${state.lens === id ? 'active' : ''}" data-lens="${id}" type="button">${escapeHtml(label)}</button>`
+      ).join('');
+
+      els.topics.innerHTML = `<button class="pill ${state.topic === '' ? 'active' : ''}" data-topic="" type="button">All topics</button>` +
+        catalog.topics.filter((topic) => topic.count).map((topic) =>
+          `<button class="pill ${state.topic === topic.name ? 'active' : ''}" data-topic="${escapeHtml(topic.name)}" type="button"><span class="topic-dot" style="background:${topicColors[topic.name] || topicColors.Other}"></span>${escapeHtml(topic.name)} · ${fmt.format(topic.count)}</button>`
+        ).join('');
+
+      els.projects.innerHTML = `<button class="project ${state.project === '' ? 'active' : ''}" data-project="" type="button"><strong>Clear project lens</strong><span>Return to the whole catalog landscape.</span></button>` +
+        catalog.projects.map((project) =>
+          `<button class="project ${state.project === project.id ? 'active' : ''}" data-project="${escapeHtml(project.id)}" type="button"><strong>${escapeHtml(project.name)} · ${project.ids.length}</strong><span>${escapeHtml(project.question)}</span></button>`
+        ).join('');
+
+      els.format.innerHTML = `<option value="">All formats</option>` + catalog.formats.map(([format, count]) =>
+        `<option value="${escapeHtml(format)}">${escapeHtml(format)} (${fmt.format(count)})</option>`
+      ).join('');
+
+      els.agency.innerHTML = `<option value="">All agencies</option>` + catalog.agencies.map(([agency, count]) =>
+        `<option value="${escapeHtml(agency)}">${escapeHtml(agency)} (${fmt.format(count)})</option>`
+      ).join('');
+
+      els.wordJump.innerHTML = `<option value="">Choose a frequent term</option>` + catalog.words.slice(0, 80).map(([word, count]) =>
+        `<option value="${escapeHtml(word)}">${escapeHtml(word)} (${fmt.format(count)})</option>`
+      ).join('');
+    }
+
+    function renderRows(rows) {
+      if (!rows.length) {
+        els.rows.innerHTML = `<div class="empty">No datasets match this combination.</div>`;
+        return;
+      }
+
+      els.rows.innerHTML = rows.map((dataset, index) => `
+        <button class="row ${dataset.datasetId === state.selectedId ? 'selected' : ''}" data-id="${escapeHtml(dataset.datasetId)}" type="button">
+          <span class="rank">#${fmt.format(index + 1)}<br><span class="score">${dataset.scores.project}</span></span>
+          <span>
+            <span class="name">${escapeHtml(dataset.name)}</span>
+            <span class="sub">${escapeHtml(dataset.topic)} · ${escapeHtml(dataset.format)} · updated ${dateLabel(dataset.lastUpdatedAt)}</span>
+          </span>
+          <span class="agency-cell">
+            <span class="sub">${escapeHtml(dataset.agency)}</span>
+          </span>
+          <span class="reason-cell">
+            <span class="sub">${escapeHtml(dataset.reason)}</span>
+            <span class="tags">${dataset.signals.slice(0, 4).map((signal) => `<span class="tag">${escapeHtml(signal)}</span>`).join('')}</span>
+          </span>
+        </button>
+      `).join('');
+    }
+
+    function renderDetail() {
+      const dataset = byId.get(state.selectedId) || datasets[0];
+      const related = relatedDatasets(dataset).slice(0, 6);
+      const projectNames = dataset.relatedProjects.map((id) => catalog.projects.find((project) => project.id === id)?.name).filter(Boolean);
+
+      els.detail.innerHTML = `
+        <span class="eyebrow"><span class="topic-dot" style="background:${topicColors[dataset.topic] || topicColors.Other}"></span>${escapeHtml(dataset.topic)}</span>
+        <h2>${escapeHtml(dataset.name)}</h2>
+        <div class="tags">
+          ${dataset.signals.map((signal) => `<span class="tag">${escapeHtml(signal)}</span>`).join('')}
+        </div>
+        <p class="desc">${escapeHtml(dataset.description)}</p>
+
+        <div class="meta-list">
+          <div class="meta-item"><span>Agency</span><b title="${escapeHtml(dataset.agency)}">${escapeHtml(dataset.agency)}</b></div>
+          <div class="meta-item"><span>Format</span><b>${escapeHtml(dataset.format)}</b></div>
+          <div class="meta-item"><span>Updated</span><b>${dateLabel(dataset.lastUpdatedAt)}</b></div>
+          <div class="meta-item"><span>Size</span><b>${sizeLabel(dataset.datasetSize)}</b></div>
+          <div class="meta-item"><span>Coverage</span><b>${dataset.spanYears ? `${dataset.spanYears} years` : 'Unknown'}</b></div>
+          <div class="meta-item"><span>Fields</span><b>${dataset.fieldCount || 'Unknown'}</b></div>
+        </div>
+
+        ${metricMarkup(dataset)}
+
+        <div class="actions">
+          <a class="text-link" href="${metadataUrl(dataset.datasetId)}" target="_blank" rel="noreferrer">Metadata API</a>
+          <button class="text-link" type="button" id="copyId">Copy ID</button>
+        </div>
+
+        ${projectNames.length ? `<p class="hint">Appears in: ${projectNames.map(escapeHtml).join(', ')}</p>` : ''}
+
+        <section class="detail-related">
+          <h2 style="font-size:16px;margin-top:22px;">Related paths</h2>
+          <div class="mini-list">
+            ${related.map((item) => `
+              <button class="mini" data-id="${escapeHtml(item.datasetId)}" type="button">
+                <strong>${escapeHtml(item.name)}</strong>
+                <span>${escapeHtml(item.topic)} · ${escapeHtml(item.reason)}</span>
+              </button>
+            `).join('')}
+          </div>
+        </section>
+
+        ${dataset.fields.length ? `<section class="detail-fields"><h2 style="font-size:16px;margin-top:22px;">Visible fields</h2><p class="field-list">${dataset.fields.map(escapeHtml).join(' · ')}</p></section>` : ''}
+      `;
+    }
+
+    function metricMarkup(dataset) {
+      const metrics = [
+        ['Project', dataset.scores.project, '#8b5e3c'],
+        ['Live', dataset.scores.live, '#a4573f'],
+        ['Geo', dataset.scores.geo, '#3e7476'],
+        ['Human', dataset.scores.human, '#7b587b'],
+        ['Hidden', dataset.scores.hidden, '#667b50'],
+        ['Combo', dataset.scores.combo, '#4d7255']
+      ];
+      return metrics.map(([name, value, color]) => `
+        <div class="metric">
+          <span>${name}</span>
+          <span class="track"><span class="fill" style="width:${value}%;background:${color}"></span></span>
+          <b>${value}</b>
+        </div>
+      `).join('');
+    }
+
+    function relatedDatasets(dataset) {
+      return datasets
+        .filter((candidate) => candidate.datasetId !== dataset.datasetId)
+        .map((candidate) => {
+          const sharedSignals = candidate.signals.filter((signal) => dataset.signals.includes(signal)).length;
+          const sharedProjects = candidate.relatedProjects.filter((project) => dataset.relatedProjects.includes(project)).length;
+          const score =
+            (candidate.topic === dataset.topic ? 28 : 0) +
+            sharedSignals * 9 +
+            sharedProjects * 35 +
+            Math.min(candidate.scores.project, 100) * 0.16 +
+            (candidate.format === dataset.format ? 5 : 0);
+          return { ...candidate, _related: score };
+        })
+        .sort((a, b) => b._related - a._related);
+    }
+
+    function drawLandscape(rows) {
+      const canvas = els.canvas;
+      const rect = canvas.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      const width = Math.max(320, rect.width);
+      const height = Math.max(280, rect.height);
+      if (canvas.width !== Math.round(width * dpr) || canvas.height !== Math.round(height * dpr)) {
+        canvas.width = Math.round(width * dpr);
+        canvas.height = Math.round(height * dpr);
+      }
+      const ctx = canvas.getContext('2d');
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, width, height);
+      ctx.save();
+      ctx.font = '12px ui-sans-serif, system-ui, sans-serif';
+      ctx.fillStyle = 'rgba(37,34,29,0.48)';
+      for (const topic of catalog.topics) {
+        if (!topic.count) continue;
+        const [x, y] = topic.center;
+        ctx.fillText(topic.name, x * width - 44, y * height - 18);
+      }
+      ctx.restore();
+
+      const active = new Set(rows.map((dataset) => dataset.datasetId));
+      const selected = byId.get(state.selectedId);
+      const hover = byId.get(state.hoverId);
+
+      for (const dataset of datasets) {
+        const isActive = active.has(dataset.datasetId);
+        const isSelected = selected && selected.datasetId === dataset.datasetId;
+        const isHover = hover && hover.datasetId === dataset.datasetId;
+        const x = dataset.x * width;
+        const y = dataset.y * height;
+        const radius = isSelected || isHover ? 6.4 : 1.6 + dataset.scores.project / 70;
+        ctx.beginPath();
+        ctx.arc(x, y, radius, 0, Math.PI * 2);
+        ctx.fillStyle = isActive ? topicColors[dataset.topic] || topicColors.Other : 'rgba(37,34,29,0.10)';
+        ctx.globalAlpha = isSelected ? 1 : isHover ? 0.92 : isActive ? 0.62 : 0.22;
+        ctx.fill();
+        if (isSelected || isHover) {
+          ctx.globalAlpha = 1;
+          ctx.lineWidth = 1.5;
+          ctx.strokeStyle = '#25221d';
+          ctx.stroke();
+        }
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    function nearestDataset(event, rows) {
+      const rect = els.canvas.getBoundingClientRect();
+      const x = event.clientX - rect.left;
+      const y = event.clientY - rect.top;
+      const width = rect.width;
+      const height = rect.height;
+      const candidates = rows.length < 900 ? rows : datasets;
+      let best = null;
+      let bestDistance = Infinity;
+      for (const dataset of candidates) {
+        const dx = dataset.x * width - x;
+        const dy = dataset.y * height - y;
+        const distance = dx * dx + dy * dy;
+        if (distance < bestDistance) {
+          best = dataset;
+          bestDistance = distance;
+        }
+      }
+      return bestDistance < 420 ? best : null;
+    }
+
+    function showTooltip(dataset, event) {
+      if (!dataset) {
+        els.tooltip.style.display = 'none';
+        return;
+      }
+      els.tooltip.innerHTML = `<b>${escapeHtml(dataset.name)}</b><span>${escapeHtml(dataset.reason)} · ${dataset.scores.project}</span>`;
+      els.tooltip.style.display = 'block';
+      const shell = els.canvas.parentElement.getBoundingClientRect();
+      const x = Math.min(event.clientX - shell.left + 14, shell.width - els.tooltip.offsetWidth - 10);
+      const y = Math.min(event.clientY - shell.top + 14, shell.height - els.tooltip.offsetHeight - 10);
+      els.tooltip.style.left = `${Math.max(8, x)}px`;
+      els.tooltip.style.top = `${Math.max(8, y)}px`;
+    }
+
+    function selectDataset(id, scroll = false) {
+      state.selectedId = id;
+      renderDetail();
+      document.querySelectorAll('.row.selected').forEach((row) => row.classList.remove('selected'));
+      const row = document.querySelector(`.row[data-id="${CSS.escape(id)}"]`);
+      if (row) {
+        row.classList.add('selected');
+        if (scroll) row.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      }
+      drawLandscape(filteredRows());
+    }
+
+    function render() {
+      const rows = filteredRows();
+      if (rows.length && !rows.some((dataset) => dataset.datasetId === state.selectedId)) {
+        state.selectedId = rows[0].datasetId;
+      }
+      renderStats(rows);
+      renderRows(rows);
+      renderDetail();
+      renderControlsActiveState();
+      drawLandscape(rows);
+    }
+
+    function renderControlsActiveState() {
+      els.lenses.querySelectorAll('[data-lens]').forEach((button) => button.classList.toggle('active', button.dataset.lens === state.lens));
+      els.topics.querySelectorAll('[data-topic]').forEach((button) => button.classList.toggle('active', button.dataset.topic === state.topic));
+      els.projects.querySelectorAll('[data-project]').forEach((button) => button.classList.toggle('active', button.dataset.project === state.project));
+    }
+
+    function init() {
+      renderControls();
+      els.query.value = state.query;
+      els.sort.value = state.sort;
+      els.format.value = state.format;
+      els.agency.value = state.agency;
+      els.freshness.value = state.freshness;
+
+      els.query.addEventListener('input', () => {
+        state.query = els.query.value;
+        state.project = '';
+        render();
+      });
+      els.sort.addEventListener('change', () => {
+        state.sort = els.sort.value;
+        render();
+      });
+      els.format.addEventListener('change', () => {
+        state.format = els.format.value;
+        render();
+      });
+      els.agency.addEventListener('change', () => {
+        state.agency = els.agency.value;
+        render();
+      });
+      els.freshness.addEventListener('change', () => {
+        state.freshness = els.freshness.value;
+        render();
+      });
+      els.wordJump.addEventListener('change', () => {
+        if (!els.wordJump.value) return;
+        state.query = els.wordJump.value;
+        els.query.value = state.query;
+        state.project = '';
+        render();
+      });
+      els.lenses.addEventListener('click', (event) => {
+        const button = event.target.closest('[data-lens]');
+        if (!button) return;
+        state.lens = button.dataset.lens;
+        state.project = '';
+        render();
+      });
+      els.topics.addEventListener('click', (event) => {
+        const button = event.target.closest('[data-topic]');
+        if (!button) return;
+        state.topic = button.dataset.topic;
+        render();
+      });
+      els.projects.addEventListener('click', (event) => {
+        const button = event.target.closest('[data-project]');
+        if (!button) return;
+        state.project = button.dataset.project;
+        state.lens = 'all';
+        state.topic = '';
+        state.query = '';
+        els.query.value = '';
+        render();
+      });
+      els.rows.addEventListener('click', (event) => {
+        const row = event.target.closest('[data-id]');
+        if (!row) return;
+        selectDataset(row.dataset.id);
+      });
+      els.detail.addEventListener('click', async (event) => {
+        const mini = event.target.closest('.mini[data-id]');
+        if (mini) selectDataset(mini.dataset.id, true);
+        if (event.target.id === 'copyId') {
+          await navigator.clipboard.writeText(state.selectedId);
+          event.target.textContent = 'Copied';
+          setTimeout(() => { event.target.textContent = 'Copy ID'; }, 1000);
+        }
+      });
+      els.canvas.addEventListener('mousemove', (event) => {
+        const nearest = nearestDataset(event, filteredRows());
+        state.hoverId = nearest?.datasetId || '';
+        showTooltip(nearest, event);
+        drawLandscape(filteredRows());
+      });
+      els.canvas.addEventListener('mouseleave', () => {
+        state.hoverId = '';
+        showTooltip(null);
+        drawLandscape(filteredRows());
+      });
+      els.canvas.addEventListener('click', (event) => {
+        const nearest = nearestDataset(event, filteredRows());
+        if (nearest) selectDataset(nearest.datasetId, true);
+      });
+      window.addEventListener('resize', () => drawLandscape(filteredRows()));
+      render();
+    }
+
+    init();
+  </script>
+</body>
+</html>
