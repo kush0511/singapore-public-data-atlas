@@ -693,7 +693,7 @@
       }
 
       .searchbar {
-        grid-template-columns: minmax(0, 1fr) 108px 94px;
+        grid-template-columns: minmax(82px, 1fr) minmax(124px, 0.42fr) minmax(108px, 0.34fr);
         gap: 6px;
       }
 
@@ -706,6 +706,15 @@
         padding: 7px 8px;
         border-radius: 8px;
         font-size: 13px;
+      }
+
+      .top select {
+        padding-right: 24px;
+        text-overflow: ellipsis;
+      }
+
+      .top input {
+        text-overflow: ellipsis;
       }
 
       .mobile-tabs {
@@ -1133,8 +1142,25 @@
       mobileSummary: document.querySelector('#mobileSummary')
     };
 
+    const plotExtent = datasets.reduce((extent, dataset) => ({
+      minX: Math.min(extent.minX, dataset.x),
+      maxX: Math.max(extent.maxX, dataset.x),
+      minY: Math.min(extent.minY, dataset.y),
+      maxY: Math.max(extent.maxY, dataset.y)
+    }), { minX: Infinity, maxX: -Infinity, minY: Infinity, maxY: -Infinity });
+
     const mobileQuery = window.matchMedia('(max-width: 760px)');
     const mobileRowStep = 36;
+    const desktopSearchPlaceholder = 'dengue, religion, taxi, hawker, resale, Syonan...';
+    const sortLabelPairs = {
+      project: ['Project leverage', 'Leverage'],
+      hidden: ['Most hidden', 'Hidden'],
+      live: ['Most live', 'Live'],
+      geo: ['Most geographic', 'Geo'],
+      updated: ['Recently updated', 'Recent'],
+      size: ['Largest datasets', 'Largest'],
+      name: ['Name', 'Name']
+    };
 
     function isMobile() {
       return mobileQuery.matches;
@@ -1147,6 +1173,36 @@
     function renderFromStart() {
       resetVisibleRows();
       render();
+    }
+
+    function updateCompactControlLabels() {
+      const compact = isMobile();
+      els.query.placeholder = compact ? 'Search' : desktopSearchPlaceholder;
+      els.sort.querySelectorAll('option').forEach((option) => {
+        const labels = sortLabelPairs[option.value];
+        if (labels) option.textContent = compact ? labels[1] : labels[0];
+      });
+      const formatAll = els.format.querySelector('option[value=""]');
+      if (formatAll) formatAll.textContent = compact ? 'Formats' : 'All formats';
+    }
+
+    function plotPadding(width) {
+      const compact = width < 540;
+      return compact
+        ? { left: 0.05, right: 0.05, top: 0.06, bottom: 0.06 }
+        : { left: 0.055, right: 0.055, top: 0.075, bottom: 0.075 };
+    }
+
+    function plotPoint(rawX, rawY, width, height) {
+      const pad = plotPadding(width);
+      const xSpan = Math.max(0.001, plotExtent.maxX - plotExtent.minX);
+      const ySpan = Math.max(0.001, plotExtent.maxY - plotExtent.minY);
+      const xNorm = (rawX - plotExtent.minX) / xSpan;
+      const yNorm = (rawY - plotExtent.minY) / ySpan;
+      return {
+        x: (pad.left + xNorm * (1 - pad.left - pad.right)) * width,
+        y: (pad.top + yNorm * (1 - pad.top - pad.bottom)) * height
+      };
     }
 
     function dateLabel(value) {
@@ -1286,6 +1342,7 @@
       els.wordJump.innerHTML = `<option value="">Choose a frequent term</option>` + catalog.words.slice(0, 80).map(([word, count]) =>
         `<option value="${escapeHtml(word)}">${escapeHtml(word)} (${fmt.format(count)})</option>`
       ).join('');
+      updateCompactControlLabels();
     }
 
     function renderRows(rows) {
@@ -1446,8 +1503,8 @@
         ctx.fillStyle = 'rgba(23,32,31,0.48)';
         for (const topic of catalog.topics) {
           if (!topic.count) continue;
-          const [x, y] = topic.center;
-          ctx.fillText(topic.name, x * width - 44, y * height - 18);
+          const point = plotPoint(topic.center[0], topic.center[1], width, height);
+          ctx.fillText(topic.name, point.x - 44, point.y - 18);
         }
         ctx.restore();
       }
@@ -1460,12 +1517,11 @@
         const isActive = active.has(dataset.datasetId);
         const isSelected = selected && selected.datasetId === dataset.datasetId;
         const isHover = hover && hover.datasetId === dataset.datasetId;
-        const x = dataset.x * width;
-        const y = dataset.y * height;
+        const point = plotPoint(dataset.x, dataset.y, width, height);
         const baseRadius = mobile ? 1.4 + dataset.scores.project / 55 : 1.6 + dataset.scores.project / 70;
         const radius = isSelected || isHover ? (mobile ? 8 : 6.4) : baseRadius;
         ctx.beginPath();
-        ctx.arc(x, y, radius, 0, Math.PI * 2);
+        ctx.arc(point.x, point.y, radius, 0, Math.PI * 2);
         ctx.fillStyle = isActive ? topicColors[dataset.topic] || topicColors.Other : 'rgba(23,32,31,0.10)';
         ctx.globalAlpha = isSelected ? 1 : isHover ? 0.94 : isActive ? (mobile ? 0.72 : 0.62) : (mobile ? 0.12 : 0.22);
         ctx.fill();
@@ -1489,8 +1545,9 @@
       let best = null;
       let bestDistance = Infinity;
       for (const dataset of candidates) {
-        const dx = dataset.x * width - x;
-        const dy = dataset.y * height - y;
+        const point = plotPoint(dataset.x, dataset.y, width, height);
+        const dx = point.x - x;
+        const dy = point.y - y;
         const distance = dx * dx + dy * dy;
         if (distance < bestDistance) {
           best = dataset;
@@ -1555,6 +1612,7 @@
 
     function init() {
       renderControls();
+      updateCompactControlLabels();
       els.query.value = state.query;
       els.sort.value = state.sort;
       els.format.value = state.format;
@@ -1690,6 +1748,7 @@
         if (nowMobile !== wasMobile) {
           wasMobile = nowMobile;
           resetVisibleRows();
+          updateCompactControlLabels();
           render();
           return;
         }
