@@ -8,28 +8,31 @@
   <script src="sg_datasets_explorer_data.js"></script>
   <style>
     :root {
-      --paper: #f7f4ee;
-      --paper-2: #fbfaf7;
-      --ink: #25221d;
-      --muted: #6f6960;
-      --soft: #d8d0c4;
-      --line: #c9c0b3;
-      --line-soft: rgba(37, 34, 29, 0.12);
-      --wash: rgba(255, 255, 255, 0.52);
-      --clay: #8b5e3c;
-      --moss: #667b50;
-      --sea: #3e7476;
-      --plum: #7b587b;
-      --blue: #4d668b;
-      --rust: #a4573f;
-      --gold: #9a7538;
-      --green: #4d7255;
-      --shadow: 0 22px 60px rgba(37, 34, 29, 0.08);
+      --paper: #f4f7f6;
+      --paper-2: #fffefd;
+      --ink: #17201f;
+      --muted: #596966;
+      --soft: #dce7e3;
+      --line: #b8c9c4;
+      --line-soft: rgba(23, 32, 31, 0.13);
+      --wash: rgba(255, 255, 255, 0.68);
+      --clay: #8f5b3f;
+      --moss: #5f7d4d;
+      --sea: #217c73;
+      --plum: #7b5a86;
+      --blue: #3f6b9a;
+      --rust: #aa4d42;
+      --gold: #9c7432;
+      --green: #3e7a60;
+      --shadow: 0 20px 52px rgba(23, 32, 31, 0.10);
     }
 
     * { box-sizing: border-box; }
 
-    html { scroll-behavior: smooth; }
+    html {
+      scroll-behavior: smooth;
+      scroll-padding-top: 96px;
+    }
 
     body {
       margin: 0;
@@ -45,6 +48,11 @@
     }
 
     button { cursor: pointer; }
+
+    button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible {
+      outline: 2px solid var(--sea);
+      outline-offset: 2px;
+    }
 
     .top {
       position: sticky;
@@ -106,8 +114,16 @@
     }
 
     input:focus, select:focus {
-      border-color: var(--clay);
-      box-shadow: 0 0 0 3px rgba(139, 94, 60, 0.12);
+      border-color: var(--sea);
+      box-shadow: 0 0 0 3px rgba(33, 124, 115, 0.14);
+    }
+
+    .mobile-tabs {
+      display: none;
+    }
+
+    .mobile-summary {
+      display: none;
     }
 
     .workspace {
@@ -137,7 +153,7 @@
       height: calc(100vh - 89px);
       overflow: auto;
       padding: 22px 24px 34px;
-      background: rgba(251, 250, 247, 0.78);
+      background: rgba(255, 254, 253, 0.80);
       border-left: 1px solid var(--line-soft);
       backdrop-filter: blur(18px);
     }
@@ -155,7 +171,7 @@
     .stat {
       min-height: 86px;
       padding: 14px 15px;
-      background: rgba(251, 250, 247, 0.70);
+      background: rgba(255, 254, 253, 0.74);
     }
 
     .stat b {
@@ -198,7 +214,7 @@
       border-radius: 999px;
       background: transparent;
       padding: 7px 11px;
-      color: #3b352e;
+      color: #263331;
       font-size: 13px;
       white-space: nowrap;
     }
@@ -242,9 +258,9 @@
       position: relative;
       border: 1px solid var(--line-soft);
       background:
-        linear-gradient(rgba(37, 34, 29, 0.035) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(37, 34, 29, 0.035) 1px, transparent 1px),
-        rgba(251, 250, 247, 0.68);
+        linear-gradient(rgba(23, 32, 31, 0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(23, 32, 31, 0.035) 1px, transparent 1px),
+        rgba(255, 254, 253, 0.70);
       background-size: 42px 42px;
       min-height: 390px;
       box-shadow: var(--shadow);
@@ -254,7 +270,27 @@
       display: block;
       width: 100%;
       height: 420px;
-      touch-action: manipulation;
+      touch-action: none;
+      cursor: crosshair;
+    }
+
+    .map-inspector {
+      display: none;
+      margin: 0 10px 10px;
+      padding: 10px 11px;
+      border: 1px solid var(--line-soft);
+      border-radius: 8px;
+      background: rgba(255, 254, 253, 0.88);
+      box-shadow: 0 10px 26px rgba(23, 32, 31, 0.10);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .map-inspector b {
+      display: block;
+      margin-bottom: 3px;
+      font-size: 13px;
+      line-height: 1.2;
     }
 
     .tooltip {
@@ -266,7 +302,7 @@
       padding: 10px 11px;
       border: 1px solid var(--line-soft);
       background: color-mix(in srgb, var(--paper-2) 92%, white);
-      box-shadow: 0 12px 36px rgba(37, 34, 29, 0.16);
+      box-shadow: 0 12px 36px rgba(23, 32, 31, 0.16);
       font-size: 12px;
       line-height: 1.35;
     }
@@ -385,7 +421,7 @@
       height: 26px;
       margin-top: 4px;
       border-radius: 999px;
-      background: rgba(37, 34, 29, 0.08);
+      background: rgba(23, 32, 31, 0.08);
       color: var(--ink);
       font-size: 12px;
       font-weight: 720;
@@ -406,6 +442,10 @@
       line-height: 1.32;
     }
 
+    .cell-label {
+      display: none;
+    }
+
     .tags {
       display: flex;
       flex-wrap: wrap;
@@ -416,9 +456,21 @@
       border: 1px solid var(--line-soft);
       border-radius: 999px;
       padding: 3px 7px;
-      color: #514a42;
+      color: #3d4a47;
       font-size: 11px;
       white-space: nowrap;
+    }
+
+    .load-more {
+      width: 100%;
+      min-height: 48px;
+      margin-top: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--paper-2);
+      color: var(--ink);
+      font-size: 13px;
+      font-weight: 700;
     }
 
     .empty {
@@ -434,7 +486,7 @@
     }
 
     .detail .desc {
-      color: #514b43;
+      color: #3f4b48;
       font-size: 13px;
       line-height: 1.47;
       margin: 14px 0 8px;
@@ -476,7 +528,7 @@
     .meta-item {
       min-width: 0;
       padding: 10px;
-      background: rgba(251, 250, 247, 0.75);
+      background: rgba(255, 254, 253, 0.78);
     }
 
     .meta-item span {
@@ -509,7 +561,7 @@
 
     .track {
       height: 6px;
-      background: rgba(37, 34, 29, 0.10);
+      background: rgba(23, 32, 31, 0.10);
       overflow: hidden;
       border-radius: 999px;
     }
@@ -620,14 +672,20 @@
     }
 
     @media (max-width: 760px) {
+      html {
+        scroll-padding-top: 62px;
+      }
+
       .top {
         position: static;
-        gap: 10px;
-        padding: 12px 14px;
+        grid-template-columns: 1fr;
+        gap: 7px;
+        padding: 8px 10px 7px;
       }
 
       .brand h1 {
-        font-size: 23px;
+        font-size: 16px;
+        line-height: 1.05;
       }
 
       .brand p {
@@ -635,17 +693,32 @@
       }
 
       .searchbar {
-        grid-template-columns: 1fr 1fr;
-        gap: 8px;
+        grid-template-columns: minmax(0, 1fr) 108px 94px;
+        gap: 6px;
       }
 
       .searchbar .field:first-child {
-        grid-column: 1 / -1;
+        grid-column: auto;
       }
 
       input, select {
         min-height: 38px;
-        padding: 7px 9px;
+        padding: 7px 8px;
+        border-radius: 8px;
+        font-size: 13px;
+      }
+
+      .mobile-tabs {
+        display: none;
+      }
+
+      .top label {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+        white-space: nowrap;
       }
 
       .stats {
@@ -656,43 +729,68 @@
         grid-template-areas:
           "atlas"
           "detail"
-          "lenses"
           "filters"
-          "projects"
-          "directory";
+          "lenses"
+          "directory"
+          "projects";
       }
 
       .lens-panel {
-        margin: 18px 14px 0;
-        padding-top: 14px;
-        border-top: 1px solid var(--line-soft);
+        margin: 12px 12px 0;
       }
 
       .atlas {
-        margin: 12px 14px 0;
+        margin: 6px 10px 0;
         padding-top: 0;
         border-top: 0;
+        scroll-margin-top: 62px;
       }
 
       .section-head {
+        align-items: center;
         margin-bottom: 8px;
       }
 
       .section-head h2 {
-        font-size: 15px;
+        font-size: 16px;
+      }
+
+      .atlas .section-head .hint {
+        display: none;
+      }
+
+      .mobile-summary {
+        display: block;
+        margin: -4px 0 6px;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.3;
       }
 
       #landscape {
-        height: clamp(310px, 58vh, 390px);
+        height: clamp(255px, 38vh, 330px);
       }
 
       .map-shell {
-        min-height: 310px;
+        position: relative;
+        min-height: 0;
+        overflow: hidden;
+        border-radius: 8px;
+        box-shadow: 0 14px 34px rgba(23, 32, 31, 0.10);
+      }
+
+      .map-inspector {
+        display: none;
+      }
+
+      .tooltip {
+        display: none !important;
       }
 
       .filters {
         grid-template-columns: 1fr 1fr;
-        margin: 14px 14px 0;
+        margin: 12px 12px 0;
+        scroll-margin-top: 62px;
       }
 
       .filters .field:first-child {
@@ -700,23 +798,27 @@
       }
 
       .projects {
-        margin: 18px 14px 0;
+        margin: 18px 12px 0;
         padding-top: 14px;
       }
 
       .project {
         flex-basis: min(300px, 78vw);
         padding: 10px 11px;
+        min-height: 104px;
       }
 
       .pill {
-        min-height: 31px;
-        padding: 6px 9px;
+        min-height: 42px;
+        padding: 8px 11px;
         font-size: 12px;
       }
 
       .directory {
-        padding: 0 14px 42px;
+        margin-top: 16px;
+        padding: 0 12px 42px;
+        border-top: 0;
+        scroll-margin-top: 62px;
       }
 
       .directory-head {
@@ -724,8 +826,23 @@
       }
 
       .row {
+        min-height: 0;
         grid-template-columns: 48px minmax(0, 1fr);
         gap: 10px;
+        margin-top: 10px;
+        padding: 12px;
+        border: 1px solid var(--line-soft);
+        border-radius: 8px;
+        background: rgba(255, 254, 253, 0.84);
+        box-shadow: 0 8px 22px rgba(23, 32, 31, 0.05);
+        content-visibility: auto;
+        contain-intrinsic-size: 148px;
+      }
+
+      .row:hover, .row.selected {
+        background: var(--paper-2);
+        border-color: color-mix(in srgb, var(--sea) 58%, var(--line));
+        box-shadow: inset 0 0 0 1px rgba(33, 124, 115, 0.22), 0 10px 26px rgba(23, 32, 31, 0.07);
       }
 
       .row .sub:nth-child(n), .row > .agency-cell, .row > .reason-cell {
@@ -733,19 +850,111 @@
       }
 
       .agency-cell, .reason-cell {
-        margin-top: -4px;
+        margin-top: -2px;
+      }
+
+      .cell-label {
+        display: block;
+        margin: 2px 0 3px;
+        color: var(--muted);
+        font-size: 10px;
+        font-weight: 760;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .name {
+        font-size: 15px;
+        line-height: 1.22;
+      }
+
+      .rank {
+        font-size: 11px;
+      }
+
+      .score {
+        min-width: 42px;
+        height: 28px;
+        background: rgba(33, 124, 115, 0.11);
       }
 
       .detail {
-        padding: 18px 16px;
+        margin: 8px 10px 0;
+        padding: 12px;
+        border: 1px solid var(--line-soft);
+        border-radius: 8px;
+        background: rgba(255, 254, 253, 0.88);
+        scroll-margin-top: 62px;
+      }
+
+      .detail .eyebrow {
+        font-size: 10px;
       }
 
       .detail h2 {
-        font-size: 20px;
+        margin: 5px 0 7px;
+        font-size: 16px;
+        line-height: 1.16;
+      }
+
+      .detail .tags {
+        gap: 4px;
+      }
+
+      .detail .tag {
+        padding: 2px 6px;
+        font-size: 10px;
+      }
+
+      .detail .desc {
+        margin: 8px 0 10px;
+        font-size: 13px;
+        line-height: 1.38;
       }
 
       .detail .desc.collapsed {
-        -webkit-line-clamp: 5;
+        -webkit-line-clamp: 3;
+      }
+
+      .more-button {
+        min-height: 32px;
+        margin-bottom: 8px;
+      }
+
+      .meta-list {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        margin: 8px 0;
+      }
+
+      .meta-item {
+        padding: 7px;
+      }
+
+      .meta-item:nth-child(n+4) {
+        display: none;
+      }
+
+      .meta-item span {
+        font-size: 10px;
+      }
+
+      .meta-item b {
+        font-size: 12px;
+      }
+
+      .metric {
+        display: none;
+      }
+
+      .actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        margin: 10px 0 8px;
+      }
+
+      .text-link {
+        justify-content: center;
+        min-height: 44px;
       }
 
       .detail-related, .detail-fields {
@@ -784,6 +993,13 @@
     </div>
   </header>
 
+  <nav class="mobile-tabs" aria-label="Mobile sections">
+    <a href="#atlas">Map</a>
+    <a href="#detail">Selected</a>
+    <a href="#directory">Results</a>
+    <a href="#filters">Filters</a>
+  </nav>
+
   <div class="workspace">
     <main class="main">
       <section class="stats" id="stats"></section>
@@ -797,20 +1013,22 @@
         <div class="topic-strip" id="topics"></div>
       </section>
 
-      <section class="atlas">
+      <section class="atlas" id="atlas">
         <div class="section-head">
           <h2>Catalog landscape</h2>
           <span class="hint">Every dot is a dataset</span>
         </div>
+        <div class="mobile-summary" id="mobileSummary"></div>
         <div class="map-shell">
           <canvas id="landscape"></canvas>
           <div class="tooltip" id="tooltip"></div>
+          <div class="map-inspector" id="mapInspector" aria-live="polite"></div>
         </div>
       </section>
 
       <aside class="detail" id="detail"></aside>
 
-      <section class="projects">
+      <section class="projects" id="projects">
         <div class="section-head">
           <h2>Project questions</h2>
           <span class="hint">Use these as opinionated entry points</span>
@@ -818,7 +1036,7 @@
         <div class="project-strip" id="projects"></div>
       </section>
 
-      <section class="filters">
+      <section class="filters" id="filters">
         <div class="field">
           <label for="wordJump">Keyword jump</label>
           <select id="wordJump"></select>
@@ -838,7 +1056,7 @@
         </div>
       </section>
 
-      <section class="directory">
+      <section class="directory" id="directory">
         <div class="directory-head">
           <span>Rank</span>
           <span>Dataset</span>
@@ -890,7 +1108,8 @@
       topic: '',
       project: '',
       selectedId: datasets[0].datasetId,
-      hoverId: ''
+      hoverId: '',
+      visibleRows: 36
     };
 
     const els = {
@@ -909,8 +1128,26 @@
       rows: document.querySelector('#rows'),
       detail: document.querySelector('#detail'),
       canvas: document.querySelector('#landscape'),
-      tooltip: document.querySelector('#tooltip')
+      tooltip: document.querySelector('#tooltip'),
+      mapInspector: document.querySelector('#mapInspector'),
+      mobileSummary: document.querySelector('#mobileSummary')
     };
+
+    const mobileQuery = window.matchMedia('(max-width: 760px)');
+    const mobileRowStep = 36;
+
+    function isMobile() {
+      return mobileQuery.matches;
+    }
+
+    function resetVisibleRows() {
+      state.visibleRows = mobileRowStep;
+    }
+
+    function renderFromStart() {
+      resetVisibleRows();
+      render();
+    }
 
     function dateLabel(value) {
       if (!value) return 'Unknown';
@@ -1018,6 +1255,7 @@
         [fmt.format(hidden), 'hidden-gem candidates']
       ].map(([value, label]) => `<div class="stat"><b>${value}</b><span>${label}</span></div>`).join('');
       els.matchText.textContent = `${fmt.format(rows.length)} of ${fmt.format(catalog.count)} datasets`;
+      els.mobileSummary.textContent = `${fmt.format(rows.length)} datasets · ${fmt.format(geo)} map-ready · ${fmt.format(live)} live · ${fmt.format(hidden)} hidden-gem candidates`;
     }
 
     function renderControls() {
@@ -1056,7 +1294,13 @@
         return;
       }
 
-      els.rows.innerHTML = rows.map((dataset, index) => `
+      const visibleCount = isMobile() ? Math.min(state.visibleRows, rows.length) : rows.length;
+      const visibleRows = rows.slice(0, visibleCount);
+      const loadMore = isMobile() && visibleCount < rows.length
+        ? `<button class="load-more" data-load-more type="button">Show ${fmt.format(Math.min(mobileRowStep, rows.length - visibleCount))} more of ${fmt.format(rows.length)}</button>`
+        : '';
+
+      els.rows.innerHTML = visibleRows.map((dataset, index) => `
         <button class="row ${dataset.datasetId === state.selectedId ? 'selected' : ''}" data-id="${escapeHtml(dataset.datasetId)}" type="button">
           <span class="rank">#${fmt.format(index + 1)}<br><span class="score">${dataset.scores.project}</span></span>
           <span>
@@ -1064,19 +1308,21 @@
             <span class="sub">${escapeHtml(dataset.topic)} · ${escapeHtml(dataset.format)} · updated ${dateLabel(dataset.lastUpdatedAt)}</span>
           </span>
           <span class="agency-cell">
+            <span class="cell-label">Source</span>
             <span class="sub">${escapeHtml(dataset.agency)}</span>
           </span>
           <span class="reason-cell">
+            <span class="cell-label">Why it matters</span>
             <span class="sub">${escapeHtml(dataset.reason)}</span>
             <span class="tags">${dataset.signals.slice(0, 4).map((signal) => `<span class="tag">${escapeHtml(signal)}</span>`).join('')}</span>
           </span>
         </button>
-      `).join('');
+      `).join('') + loadMore;
     }
 
     function renderDetail() {
       const dataset = byId.get(state.selectedId) || datasets[0];
-      const related = relatedDatasets(dataset).slice(0, 6);
+      const related = isMobile() ? [] : relatedDatasets(dataset).slice(0, 6);
       const projectNames = dataset.relatedProjects.map((id) => catalog.projects.find((project) => project.id === id)?.name).filter(Boolean);
 
       els.detail.innerHTML = `
@@ -1106,7 +1352,7 @@
 
         ${projectNames.length ? `<p class="hint">Appears in: ${projectNames.map(escapeHtml).join(', ')}</p>` : ''}
 
-        <section class="detail-related">
+        ${related.length ? `<section class="detail-related">
           <h2 style="font-size:16px;margin-top:22px;">Related paths</h2>
           <div class="mini-list">
             ${related.map((item) => `
@@ -1116,11 +1362,12 @@
               </button>
             `).join('')}
           </div>
-        </section>
+        </section>` : ''}
 
         ${dataset.fields.length ? `<section class="detail-fields"><h2 style="font-size:16px;margin-top:22px;">Visible fields</h2><p class="field-list">${dataset.fields.map(escapeHtml).join(' · ')}</p></section>` : ''}
       `;
       updateDescriptionToggle();
+      updateMapInspector(dataset);
     }
 
     function updateDescriptionToggle() {
@@ -1132,6 +1379,15 @@
       toggle.setAttribute('aria-expanded', 'false');
       const needsToggle = desc.scrollHeight > desc.clientHeight + 1;
       toggle.classList.toggle('visible', needsToggle);
+    }
+
+    function updateMapInspector(dataset = byId.get(state.hoverId) || byId.get(state.selectedId)) {
+      if (!els.mapInspector || !dataset) return;
+      els.mapInspector.innerHTML = `
+        <b>${escapeHtml(dataset.name)}</b>
+        <span>${escapeHtml(dataset.topic)} · ${escapeHtml(dataset.format)} · Project ${dataset.scores.project}</span>
+        <span>${escapeHtml(dataset.reason)}</span>
+      `;
     }
 
     function metricMarkup(dataset) {
@@ -1182,15 +1438,19 @@
       const ctx = canvas.getContext('2d');
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.clearRect(0, 0, width, height);
-      ctx.save();
-      ctx.font = '12px ui-sans-serif, system-ui, sans-serif';
-      ctx.fillStyle = 'rgba(37,34,29,0.48)';
-      for (const topic of catalog.topics) {
-        if (!topic.count) continue;
-        const [x, y] = topic.center;
-        ctx.fillText(topic.name, x * width - 44, y * height - 18);
+      const compact = width < 540;
+      const mobile = isMobile();
+      if (!compact) {
+        ctx.save();
+        ctx.font = '12px ui-sans-serif, system-ui, sans-serif';
+        ctx.fillStyle = 'rgba(23,32,31,0.48)';
+        for (const topic of catalog.topics) {
+          if (!topic.count) continue;
+          const [x, y] = topic.center;
+          ctx.fillText(topic.name, x * width - 44, y * height - 18);
+        }
+        ctx.restore();
       }
-      ctx.restore();
 
       const active = new Set(rows.map((dataset) => dataset.datasetId));
       const selected = byId.get(state.selectedId);
@@ -1202,16 +1462,17 @@
         const isHover = hover && hover.datasetId === dataset.datasetId;
         const x = dataset.x * width;
         const y = dataset.y * height;
-        const radius = isSelected || isHover ? 6.4 : 1.6 + dataset.scores.project / 70;
+        const baseRadius = mobile ? 1.4 + dataset.scores.project / 55 : 1.6 + dataset.scores.project / 70;
+        const radius = isSelected || isHover ? (mobile ? 8 : 6.4) : baseRadius;
         ctx.beginPath();
         ctx.arc(x, y, radius, 0, Math.PI * 2);
-        ctx.fillStyle = isActive ? topicColors[dataset.topic] || topicColors.Other : 'rgba(37,34,29,0.10)';
-        ctx.globalAlpha = isSelected ? 1 : isHover ? 0.92 : isActive ? 0.62 : 0.22;
+        ctx.fillStyle = isActive ? topicColors[dataset.topic] || topicColors.Other : 'rgba(23,32,31,0.10)';
+        ctx.globalAlpha = isSelected ? 1 : isHover ? 0.94 : isActive ? (mobile ? 0.72 : 0.62) : (mobile ? 0.12 : 0.22);
         ctx.fill();
         if (isSelected || isHover) {
           ctx.globalAlpha = 1;
-          ctx.lineWidth = 1.5;
-          ctx.strokeStyle = '#25221d';
+          ctx.lineWidth = mobile ? 2.5 : 1.5;
+          ctx.strokeStyle = '#17201f';
           ctx.stroke();
         }
       }
@@ -1236,12 +1497,18 @@
           bestDistance = distance;
         }
       }
-      return bestDistance < 420 ? best : null;
+      return bestDistance < (isMobile() ? 900 : 420) ? best : null;
     }
 
     function showTooltip(dataset, event) {
       if (!dataset) {
         els.tooltip.style.display = 'none';
+        updateMapInspector();
+        return;
+      }
+      if (isMobile()) {
+        els.tooltip.style.display = 'none';
+        updateMapInspector(dataset);
         return;
       }
       els.tooltip.innerHTML = `<b>${escapeHtml(dataset.name)}</b><span>${escapeHtml(dataset.reason)} · ${dataset.scores.project}</span>`;
@@ -1253,7 +1520,7 @@
       els.tooltip.style.top = `${Math.max(8, y)}px`;
     }
 
-    function selectDataset(id) {
+    function selectDataset(id, options = {}) {
       state.selectedId = id;
       renderDetail();
       document.querySelectorAll('.row.selected').forEach((row) => row.classList.remove('selected'));
@@ -1261,7 +1528,11 @@
       if (row) {
         row.classList.add('selected');
       }
+      updateMapInspector(byId.get(id));
       drawLandscape(filteredRows());
+      if (options.revealDetail) {
+        requestAnimationFrame(() => els.detail.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+      }
     }
 
     function render() {
@@ -1293,43 +1564,43 @@
       els.query.addEventListener('input', () => {
         state.query = els.query.value;
         state.project = '';
-        render();
+        renderFromStart();
       });
       els.sort.addEventListener('change', () => {
         state.sort = els.sort.value;
-        render();
+        renderFromStart();
       });
       els.format.addEventListener('change', () => {
         state.format = els.format.value;
-        render();
+        renderFromStart();
       });
       els.agency.addEventListener('change', () => {
         state.agency = els.agency.value;
-        render();
+        renderFromStart();
       });
       els.freshness.addEventListener('change', () => {
         state.freshness = els.freshness.value;
-        render();
+        renderFromStart();
       });
       els.wordJump.addEventListener('change', () => {
         if (!els.wordJump.value) return;
         state.query = els.wordJump.value;
         els.query.value = state.query;
         state.project = '';
-        render();
+        renderFromStart();
       });
       els.lenses.addEventListener('click', (event) => {
         const button = event.target.closest('[data-lens]');
         if (!button) return;
         state.lens = button.dataset.lens;
         state.project = '';
-        render();
+        renderFromStart();
       });
       els.topics.addEventListener('click', (event) => {
         const button = event.target.closest('[data-topic]');
         if (!button) return;
         state.topic = button.dataset.topic;
-        render();
+        renderFromStart();
       });
       els.projects.addEventListener('click', (event) => {
         const button = event.target.closest('[data-project]');
@@ -1339,12 +1610,18 @@
         state.topic = '';
         state.query = '';
         els.query.value = '';
-        render();
+        renderFromStart();
       });
       els.rows.addEventListener('click', (event) => {
+        const loadMore = event.target.closest('[data-load-more]');
+        if (loadMore) {
+          state.visibleRows += mobileRowStep;
+          renderRows(filteredRows());
+          return;
+        }
         const row = event.target.closest('[data-id]');
         if (!row) return;
-        selectDataset(row.dataset.id);
+        selectDataset(row.dataset.id, { revealDetail: isMobile() });
       });
       els.detail.addEventListener('click', async (event) => {
         const mini = event.target.closest('.mini[data-id]');
@@ -1362,26 +1639,63 @@
           setTimeout(() => { event.target.textContent = 'Copy ID'; }, 1000);
         }
       });
-      els.canvas.addEventListener('mousemove', (event) => {
+      function inspectLandscape(event) {
+        if (event.pointerType && event.pointerType !== 'mouse') event.preventDefault();
         const nearest = nearestDataset(event, filteredRows());
         state.hoverId = nearest?.datasetId || '';
+        if (nearest && isMobile() && nearest.datasetId !== state.selectedId) {
+          state.selectedId = nearest.datasetId;
+          renderDetail();
+          document.querySelectorAll('.row.selected').forEach((row) => row.classList.remove('selected'));
+          const row = document.querySelector(`.row[data-id="${CSS.escape(nearest.datasetId)}"]`);
+          row?.classList.add('selected');
+        }
         showTooltip(nearest, event);
         drawLandscape(filteredRows());
+        return nearest;
+      }
+
+      let chartPointer = null;
+      els.canvas.addEventListener('pointerdown', (event) => {
+        chartPointer = { x: event.clientX, y: event.clientY, moved: false };
+        els.canvas.setPointerCapture?.(event.pointerId);
+        inspectLandscape(event);
       });
-      els.canvas.addEventListener('mouseleave', () => {
+      els.canvas.addEventListener('pointermove', (event) => {
+        if (chartPointer) {
+          const dx = event.clientX - chartPointer.x;
+          const dy = event.clientY - chartPointer.y;
+          chartPointer.moved ||= Math.hypot(dx, dy) > 12;
+        }
+        inspectLandscape(event);
+      });
+      els.canvas.addEventListener('pointerleave', () => {
         state.hoverId = '';
         showTooltip(null);
         drawLandscape(filteredRows());
       });
-      els.canvas.addEventListener('click', (event) => {
-        const nearest = nearestDataset(event, filteredRows());
+      els.canvas.addEventListener('pointerup', (event) => {
+        const wasDrag = Boolean(chartPointer?.moved);
+        chartPointer = null;
+        const nearest = inspectLandscape(event);
         if (nearest) {
           state.hoverId = '';
           showTooltip(null);
           selectDataset(nearest.datasetId);
         }
       });
-      window.addEventListener('resize', () => drawLandscape(filteredRows()));
+      let wasMobile = isMobile();
+      window.addEventListener('resize', () => {
+        const nowMobile = isMobile();
+        if (nowMobile !== wasMobile) {
+          wasMobile = nowMobile;
+          resetVisibleRows();
+          render();
+          return;
+        }
+        drawLandscape(filteredRows());
+        updateMapInspector();
+      });
       render();
     }
 
