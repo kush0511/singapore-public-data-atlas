@@ -437,7 +437,31 @@
       color: #514b43;
       font-size: 13px;
       line-height: 1.47;
-      margin: 14px 0 18px;
+      margin: 14px 0 8px;
+    }
+
+    .detail .desc.collapsed {
+      display: -webkit-box;
+      -webkit-line-clamp: 6;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .more-button {
+      display: none;
+      border: 0;
+      background: transparent;
+      color: var(--ink);
+      padding: 0;
+      margin: 0 0 18px;
+      font-size: 12px;
+      font-weight: 760;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+
+    .more-button.visible {
+      display: inline-flex;
     }
 
     .meta-list {
@@ -720,11 +744,8 @@
         font-size: 20px;
       }
 
-      .detail .desc {
-        display: -webkit-box;
-        -webkit-line-clamp: 4;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
+      .detail .desc.collapsed {
+        -webkit-line-clamp: 5;
       }
 
       .detail-related, .detail-fields {
@@ -1064,7 +1085,8 @@
         <div class="tags">
           ${dataset.signals.map((signal) => `<span class="tag">${escapeHtml(signal)}</span>`).join('')}
         </div>
-        <p class="desc">${escapeHtml(dataset.description)}</p>
+        <p class="desc collapsed" id="detailDesc">${escapeHtml(dataset.description)}</p>
+        <button class="more-button" type="button" id="toggleDesc" aria-expanded="false">More</button>
 
         <div class="meta-list">
           <div class="meta-item"><span>Agency</span><b title="${escapeHtml(dataset.agency)}">${escapeHtml(dataset.agency)}</b></div>
@@ -1098,6 +1120,18 @@
 
         ${dataset.fields.length ? `<section class="detail-fields"><h2 style="font-size:16px;margin-top:22px;">Visible fields</h2><p class="field-list">${dataset.fields.map(escapeHtml).join(' · ')}</p></section>` : ''}
       `;
+      updateDescriptionToggle();
+    }
+
+    function updateDescriptionToggle() {
+      const desc = document.querySelector('#detailDesc');
+      const toggle = document.querySelector('#toggleDesc');
+      if (!desc || !toggle) return;
+      desc.classList.add('collapsed');
+      toggle.textContent = 'More';
+      toggle.setAttribute('aria-expanded', 'false');
+      const needsToggle = desc.scrollHeight > desc.clientHeight + 1;
+      toggle.classList.toggle('visible', needsToggle);
     }
 
     function metricMarkup(dataset) {
@@ -1315,6 +1349,13 @@
       els.detail.addEventListener('click', async (event) => {
         const mini = event.target.closest('.mini[data-id]');
         if (mini) selectDataset(mini.dataset.id);
+        if (event.target.id === 'toggleDesc') {
+          const desc = document.querySelector('#detailDesc');
+          const expanded = event.target.getAttribute('aria-expanded') === 'true';
+          desc.classList.toggle('collapsed', expanded);
+          event.target.textContent = expanded ? 'More' : 'Less';
+          event.target.setAttribute('aria-expanded', String(!expanded));
+        }
         if (event.target.id === 'copyId') {
           await navigator.clipboard.writeText(state.selectedId);
           event.target.textContent = 'Copied';

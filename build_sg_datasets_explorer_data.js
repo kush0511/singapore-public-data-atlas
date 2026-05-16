@@ -460,8 +460,7 @@ function cleanDescription(value) {
   return decodeMojibake(String(value || 'No description provided in the catalog metadata.'))
     .replace(/\s+/g, ' ')
     .replace(/\u2800/g, ' ')
-    .trim()
-    .slice(0, 520);
+    .trim();
 }
 
 function countTerms(text, terms) {
